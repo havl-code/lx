@@ -1,6 +1,7 @@
 from lx.ollama_client import ask_ollama, OllamaError
 from lx.parser import parse_llm_response, ResponseParseError
 from lx.display import display_result
+from lx.clipboard import prompt_copy_to_clipboard
 
 MAX_ATTEMPTS = 3
 
@@ -45,6 +46,7 @@ def main() -> None:
 
     print()
     display_result(result)
+    prompt_copy_to_clipboard(result["command"])
 
 
 if __name__ == "__main__":
