@@ -11,6 +11,8 @@ The JSON object must have exactly these three keys:
 - "explanation": a short, plain-English explanation of what the command does
 - "risk": one of "low", "medium", or "high", based on how dangerous the command is (e.g. deleting files, modifying permissions, or making irreversible changes should be "high")
 
+IMPORTANT: The "command" value must be valid JSON string content. If the shell command contains a backslash (for example, to escape parentheses like \\( or \\)), write it as a double backslash so the JSON stays valid. Prefer writing commands that avoid unnecessary backslashes when a simpler equivalent exists (e.g. use quotes around patterns instead of escaping parentheses where possible).
+
 Task: {task}
 
 JSON response:"""
@@ -27,6 +29,9 @@ def ask_ollama(task: str) -> str:
         "model": MODEL_NAME,
         "prompt": prompt,
         "stream": False,
+        "options": {
+            "temperature": 0.2,
+        },
     }
     try:
         response = requests.post(OLLAMA_URL, json=payload, timeout=60)
