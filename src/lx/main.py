@@ -1,5 +1,6 @@
 from lx.ollama_client import ask_ollama, OllamaError
 from lx.parser import parse_llm_response, ResponseParseError
+from lx.display import display_result
 
 MAX_ATTEMPTS = 3
 
@@ -43,9 +44,7 @@ def main() -> None:
         return
 
     print()
-    print(f"Command:     {result['command']}")
-    print(f"Explanation: {result['explanation']}")
-    print(f"Risk:        {result['risk']}")
+    display_result(result)
 
 
 if __name__ == "__main__":
