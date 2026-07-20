@@ -1,3 +1,5 @@
+from lx.ollama_client import ask_ollama, OllamaError
+
 def get_user_task() -> str:
     """Prompt the user until they provide non-empty text, then return it."""
     while True:
@@ -8,9 +10,15 @@ def get_user_task() -> str:
 
 
 def main() -> None:
-    """Entry point: get the user's task and print it back."""
+    """Entry point: get the user's task, send it to Ollama, print the response."""
     task = get_user_task()
-    print(f"You said: {task}")
+    print("Thinking...")
+    try:
+        answer = ask_ollama(task)
+    except OllamaError as exc:
+        print(f"Error: {exc}")
+        return
+    print(answer)
 
 
 if __name__ == "__main__":
