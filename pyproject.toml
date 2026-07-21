@@ -13,6 +13,11 @@ dependencies = [
     "pyperclip",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
 [project.scripts]
 lx = "lx.main:main"
 
