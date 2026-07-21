@@ -1,4 +1,17 @@
-**lx** turns plain-English task descriptions into ready-to-use Linux commands — powered entirely by a local LLM (via [Ollama](https://ollama.com)), so it's private, free, and works offline. It **never runs anything automatically** — you always stay in control.
+**lx** turns plain-English task descriptions into ready-to-use Linux commands; powered entirely by a local LLM (via [Ollama](https://ollama.com)) so it's private, free, and works offline. It **never runs anything automatically**: you always stay in control.
+
+```
+What would you like to do? find every pdf larger than 50mb
+Thinking...
+
+Command:     find . -type f -name "*.pdf" -size +50M
+Explanation: This command recursively searches the current directory and its
+             subdirectories for files that match the PDF extension and are
+             larger than 50 megabytes.
+Risk:        LOW
+
+Copy command to clipboard? [y/N]
+```
 
 ## Why
 
@@ -27,28 +40,26 @@ cd lx
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 ollama pull gemma4:e4b   # or your preferred model
 ```
 
 ## Usage
 
 ```bash
-PYTHONPATH=src python src/lx/main.py
+lx
 ```
-
-> **Note:** the `PYTHONPATH=src` prefix is a known rough edge — this project isn't packaged for installation yet (planned; see Roadmap below). Once packaged, this will simplify to a plain `lx` command.
 
 You'll be prompted for a task in plain English. `lx` will show the generated command, an explanation, and a risk level, then ask if you'd like to copy the command to your clipboard. **It will never run the command for you.**
 
 ## Known limitations
 
-- Small local models (4B–8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step and retry logic, but it isn't foolproof — occasional failures are possible, especially with complex or unusual tasks.
-- Risk classification is entirely the LLM's judgment based on prompt guidance — it's a helpful signal, not a guarantee. Always read the command and explanation yourself before running anything.
-- Currently requires manual `PYTHONPATH` configuration to run (see Setup/Usage above).
+- Small local models (4B–8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step and retry logic, but it isn't foolproof. Occasional failures are possible, especially with complex or unusual tasks.
+- Risk classification is entirely the LLM's judgment based on prompt guidance: it's a helpful signal, not a guarantee. Always read the command and explanation yourself before running anything.
 
 ## Roadmap
 
-- [ ] Package for proper installation (`pip install -e .`, `lx` as a console command)
+- [x] Package for proper installation (`pip install -e .`, `lx` as a console command)
 - [ ] Benchmark alternative models for speed/accuracy tradeoffs on CPU-only hardware
 
 ## License
