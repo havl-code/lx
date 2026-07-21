@@ -1,10 +1,6 @@
-from lx.ollama_client import ask_ollama, OllamaError
-from lx.parser import parse_llm_response, ResponseParseError
+from lx.ollama_client import get_structured_response, OllamaError, ResponseParseError
 from lx.display import display_result
 from lx.clipboard import prompt_copy_to_clipboard
-
-MAX_ATTEMPTS = 3
-
 
 def get_user_task() -> str:
     """Prompt the user until they provide non-empty text, then return it."""
@@ -13,21 +9,6 @@ def get_user_task() -> str:
         if user_input:
             return user_input
         print("Please enter a task.")
-
-
-def get_structured_response(task: str) -> dict:
-    """Ask Ollama for a structured response, retrying on parse failure."""
-    last_error: ResponseParseError | None = None
-
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        raw_response = ask_ollama(task)
-        try:
-            return parse_llm_response(raw_response)
-        except ResponseParseError as exc:
-            last_error = exc
-            print(f"Attempt {attempt} failed to parse, retrying...")
-
-    raise last_error
 
 
 def main() -> None:

@@ -1,8 +1,8 @@
 import requests
-
+from lx.parser import parse_llm_response, ResponseParseError
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "gemma4:e4b"
-
+MAX_ATTEMPTS = 3
 PROMPT_TEMPLATE = """You are a Linux command-line assistant.
 Given a task described in plain English, respond with ONLY a valid JSON object, no other text, no markdown formatting, no code fences.
 
@@ -45,3 +45,18 @@ def ask_ollama(task: str) -> str:
 
     data = response.json()
     return data["response"]
+
+
+def get_structured_response(task: str) -> dict:
+    """Ask Ollama for a structured response, retrying on parse failure."""
+    last_error: ResponseParseError | None = None
+
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        raw_response = ask_ollama(task)
+        try:
+            return parse_llm_response(raw_response)
+        except ResponseParseError as exc:
+            last_error = exc
+            print(f"Attempt {attempt} failed to parse, retrying...")
+
+    raise last_error
