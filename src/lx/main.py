@@ -1,5 +1,5 @@
 from lx.ollama_client import get_structured_response, OllamaError, ResponseParseError
-from lx.display import display_result
+from lx.display import display_result, thinking_status
 from lx.clipboard import prompt_copy_to_clipboard
 
 def get_user_task() -> str:
@@ -14,10 +14,10 @@ def get_user_task() -> str:
 def main() -> None:
     """Entry point: get the user's task, send it to Ollama, parse and display the result."""
     task = get_user_task()
-    print("Thinking...")
 
     try:
-        result = get_structured_response(task)
+        with thinking_status():
+            result = get_structured_response(task)
     except OllamaError as exc:
         print(f"Error: {exc}")
         return

@@ -10,6 +10,11 @@ RISK_COLORS = {
 }
 
 
+def thinking_status():
+    """Return a Rich status context manager showing an animated 'thinking' spinner."""
+    return console.status("[bold cyan]Thinking...[/bold cyan]")
+
+
 def display_result(result: dict) -> None:
     """Render the command, explanation, and risk in a styled panel."""
     risk = result["risk"]

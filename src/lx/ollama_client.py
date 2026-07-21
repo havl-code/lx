@@ -1,8 +1,13 @@
+import json
+
 import requests
+
 from lx.parser import parse_llm_response, ResponseParseError
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "gemma4:e4b"
 MAX_ATTEMPTS = 3
+
 PROMPT_TEMPLATE = """You are a Linux command-line assistant.
 Given a task described in plain English, respond with ONLY a valid JSON object, no other text, no markdown formatting, no code fences.
 
@@ -23,18 +28,18 @@ class OllamaError(Exception):
 
 
 def ask_ollama(task: str) -> str:
-    """Send a task to the local Ollama server and return the raw text response."""
+    """Send a task to the local Ollama server and return the full text response, streamed."""
     prompt = PROMPT_TEMPLATE.format(task=task)
     payload = {
         "model": MODEL_NAME,
         "prompt": prompt,
-        "stream": False,
+        "stream": True,
         "options": {
             "temperature": 0.2,
         },
     }
     try:
-        response = requests.post(OLLAMA_URL, json=payload, timeout=60)
+        response = requests.post(OLLAMA_URL, json=payload, timeout=60, stream=True)
         response.raise_for_status()
     except requests.exceptions.ConnectionError as exc:
         raise OllamaError(
@@ -43,8 +48,16 @@ def ask_ollama(task: str) -> str:
     except requests.exceptions.HTTPError as exc:
         raise OllamaError(f"Ollama returned an error: {exc}") from exc
 
-    data = response.json()
-    return data["response"]
+    full_response = ""
+    for line in response.iter_lines():
+        if not line:
+            continue
+        chunk = json.loads(line)
+        full_response += chunk.get("response", "")
+        if chunk.get("done"):
+            break
+
+    return full_response
 
 
 def get_structured_response(task: str) -> dict:
