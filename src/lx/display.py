@@ -16,7 +16,7 @@ def thinking_status():
     return console.status("[bold cyan]Thinking...[/bold cyan]")
 
 
-def display_result(result: dict) -> None:
+def display_result(result: dict, target_console: Console = console) -> None:
     """Render the command, explanation, and risk in a styled panel."""
     risk = result["risk"]
     risk_color = RISK_COLORS.get(risk, "white")
@@ -30,4 +30,4 @@ def display_result(result: dict) -> None:
         f"[bold]Risk:[/bold] [{risk_color}]{risk.upper()}[/{risk_color}]"
     )
 
-    console.print(Panel(body, title="lx result", border_style=risk_color))
+    target_console.print(Panel(body, title="lx result", border_style=risk_color))
