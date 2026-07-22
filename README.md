@@ -1,6 +1,7 @@
 # lx
 
 [![Tests](https://github.com/havl-code/lx/actions/workflows/tests.yml/badge.svg)](https://github.com/havl-code/lx/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
 **lx** turns plain-English task descriptions into ready-to-use Linux commands, powered entirely by a local LLM (via [Ollama](https://ollama.com)), so it's private, free, and works offline. It **never runs anything automatically**: you always stay in control.
 
