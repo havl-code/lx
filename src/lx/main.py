@@ -18,6 +18,7 @@ def get_user_task() -> str:
             return user_input
         print("Please enter a task.")
 
+
 def choose_model() -> str:
     """List locally available models and let the user pick one."""
     models = list_available_models()
@@ -30,6 +31,7 @@ def choose_model() -> str:
         if choice.isdigit() and 1 <= int(choice) <= len(models):
             return models[int(choice) - 1]
         print("Invalid choice, try again.")
+
 
 def main() -> None:
     """Entry point: get the user's task, send it to Ollama, parse and display the result."""
@@ -56,6 +58,7 @@ def main() -> None:
     print()
     display_result(result)
     prompt_copy_to_clipboard(result["command"])
+
 
 if __name__ == "__main__":
     main()
