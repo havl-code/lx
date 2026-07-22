@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/havl-code/lx/actions/workflows/tests.yml/badge.svg)](https://github.com/havl-code/lx/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **lx** turns plain-English task descriptions into ready-to-use Linux commands, powered entirely by a local LLM (via [Ollama](https://ollama.com)), so it's private, free, and works offline. It **never runs anything automatically**: you always stay in control.
 
@@ -29,14 +30,14 @@ I don't want to memorise every Linux command flag, and I don't want an AI agent 
 - **Structured, reliable output.** The LLM is prompted to return strict JSON (`command`, `explanation`, `risk`). Since small local models don't always follow formatting instructions perfectly, `lx` includes a JSON-repair step (for common escaping mistakes) and automatic retry logic if parsing still fails.
 - **Risk labelling.** Every generated command is labelled `low`, `medium`, or `high` risk, and colour-coded in the terminal (green/yellow/red), so dangerous commands are visually distinct before you ever consider running them.
 - **Streamed under the hood.** Responses are read from Ollama as a stream of chunks rather than one blocking call, with a live animated status indicator while the model works. The final result is still shown all at once (not word-by-word), since a partially-generated command or JSON fragment isn't meaningful or safe to display mid-stream.
+- **Model choice, your call.** On startup, `lx` lists every model you've pulled locally via Ollama and lets you pick one interactively. Set the `LX_MODEL` environment variable to skip the picker and always use a specific model.
 - **Tested and CI-checked.** Core logic (JSON parsing/repair, input validation) has unit tests, run automatically via GitHub Actions on every push.
 
 ## Requirements
 
 - Linux (developed and tested on CachyOS/Arch)
 - Python 3.11+
-- [Ollama](https://ollama.com) installed and running
-- A pulled model (developed against `gemma4:e4b`; other Ollama models can be substituted by editing `MODEL_NAME` in `src/lx/ollama_client.py`)
+- [Ollama](https://ollama.com) installed and running, with at least one model pulled (e.g. `ollama pull gemma3:4b`)
 - For clipboard support: a clipboard tool available to [`pyperclip`](https://pypi.org/project/pyperclip/): on Wayland, `wl-clipboard` (provides `wl-copy`); on X11, `xclip` or `xsel`
 
 ## Setup
@@ -48,7 +49,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
-ollama pull gemma4:e4b   # or your preferred model
+ollama pull gemma3:4b   # or any model you prefer
 ```
 
 ## Usage
@@ -57,7 +58,13 @@ ollama pull gemma4:e4b   # or your preferred model
 lx
 ```
 
-You'll be prompted for a task in plain English. `lx` will show the generated command, an explanation, and a risk level, then ask if you'd like to copy the command to your clipboard. **It will never run the command for you.**
+You'll be shown a list of your locally available Ollama models to choose from, then prompted for a task in plain English. `lx` will show the generated command, an explanation, and a risk level, then ask if you'd like to copy the command to your clipboard. **It will never run the command for you.**
+
+To skip the model picker and always use a specific model:
+
+```bash
+LX_MODEL=gemma3:4b lx
+```
 
 ## Development
 
@@ -75,10 +82,19 @@ pytest
 
 Tests cover JSON parsing/repair logic and CLI input validation, and run automatically on every push via GitHub Actions (see the badge above).
 
+### Benchmarking models
+
+`scripts/benchmark.py` times a fixed set of tasks against every locally pulled Ollama model and reports speed and JSON-parsing reliability for each. See [BENCHMARKS.md](BENCHMARKS.md) for results and findings from testing on this project's development hardware.
+
+```bash
+python scripts/benchmark.py
+```
+
 ## Known limitations
 
-- Small local models (4B to 8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step and retry logic, but it isn't foolproof: occasional failures are possible, especially with complex or unusual tasks.
-- Risk classification is entirely the LLM's judgement based on prompt guidance. It's a helpful signal, not a guarantee. Always read the command and explanation yourself before running anything.
+- Small local models (3B to 8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step and retry logic, but it isn't foolproof: occasional failures are possible, especially with complex or unusual tasks.
+- Valid JSON doesn't guarantee a correct or safe shell command; benchmarking surfaced at least one case of a syntactically broken command labelled "low risk" (see [BENCHMARKS.md](BENCHMARKS.md)). Always read the command and explanation yourself before running anything.
+- Risk classification is entirely the LLM's judgement based on prompt guidance. It's a helpful signal, not a guarantee.
 - `lx` is only available in terminals where its virtual environment is activated (standard for a project still in active development, not yet distributed as a system-wide tool).
 
 ## Roadmap
@@ -87,7 +103,8 @@ Tests cover JSON parsing/repair logic and CLI input validation, and run automati
 - [x] Add automated tests for core logic
 - [x] Add CI (GitHub Actions) to run tests on every push
 - [x] Stream responses from Ollama instead of waiting for the full response
-- [ ] Benchmark alternative models for speed/accuracy tradeoffs on CPU-only hardware
+- [x] Interactive model selection, with an `LX_MODEL` override
+- [x] Benchmark alternative models for speed/accuracy tradeoffs on CPU-only hardware
 - [ ] Installable system-wide via `pipx`, without needing manual venv activation
 
 ## Licence
