@@ -1,11 +1,12 @@
 import json
+import os
 
 import requests
 
 from lx.parser import parse_llm_response, ResponseParseError
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "gemma4:e4b"
+OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
 MAX_ATTEMPTS = 3
 
 PROMPT_TEMPLATE = """You are a Linux command-line assistant.
@@ -26,12 +27,24 @@ JSON response:"""
 class OllamaError(Exception):
     """Raised when we can't get a valid response from Ollama."""
 
+def list_available_models() -> list[str]:
+    """Return the names of all locally pulled Ollama models."""
+    try:
+        response = requests.get(OLLAMA_TAGS_URL, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.ConnectionError as exc:
+        raise OllamaError(
+            "Could not connect to Ollama. Is it running? Try: ollama serve"
+        ) from exc
 
-def ask_ollama(task: str) -> str:
+    data = response.json()
+    return [model["name"] for model in data["models"]]
+
+def ask_ollama(task: str, model: str) -> str:
     """Send a task to the local Ollama server and return the full text response, streamed."""
     prompt = PROMPT_TEMPLATE.format(task=task)
     payload = {
-        "model": MODEL_NAME,
+        "model": model,
         "prompt": prompt,
         "stream": True,
         "options": {
@@ -60,12 +73,12 @@ def ask_ollama(task: str) -> str:
     return full_response
 
 
-def get_structured_response(task: str) -> dict:
+def get_structured_response(task: str, model: str) -> dict:
     """Ask Ollama for a structured response, retrying on parse failure."""
     last_error: ResponseParseError | None = None
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        raw_response = ask_ollama(task)
+        raw_response = ask_ollama(task, model)
         try:
             return parse_llm_response(raw_response)
         except ResponseParseError as exc:
