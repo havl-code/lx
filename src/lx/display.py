@@ -2,6 +2,8 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 
+from lx.parser import command_has_valid_syntax
+
 console = Console()
 
 RISK_COLORS = {
@@ -29,5 +31,11 @@ def display_result(result: dict, target_console: Console = console) -> None:
         f"[bold]Explanation:[/bold] {explanation}\n\n"
         f"[bold]Risk:[/bold] [{risk_color}]{risk.upper()}[/{risk_color}]"
     )
+
+    if not command_has_valid_syntax(result["command"]):
+        body += (
+            "\n\n[bold red]⚠ Warning:[/bold red] this command failed a basic "
+            "syntax check and may not run correctly. Review it carefully before using."
+        )
 
     target_console.print(Panel(body, title="lx result", border_style=risk_color))

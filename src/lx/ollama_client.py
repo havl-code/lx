@@ -19,8 +19,12 @@ The JSON object must have exactly these three keys:
 
 IMPORTANT: The "command" value must be valid JSON string content.
 - If the shell command contains a backslash (for example, to escape parentheses like \\( or \\)), write it as a double backslash so the JSON stays valid.
-- If the shell command needs to quote something (like a filename pattern or a variable), use single quotes (') instead of double quotes ("), wherever possible. Avoid double quotes inside the command value entirely if a single-quote equivalent exists, since unescaped double quotes will break the JSON.
+- If the shell command needs double quotes inside it (for example, for variable expansion like "$file"), escape each one as \\" so the JSON stays valid.
 - Prefer writing commands that avoid unnecessary backslashes or quoting when a simpler equivalent exists.
+
+Example:
+Task: rename every .txt file in this folder to have a .bak extension
+JSON response: {{"command": "for f in *.txt; do mv \\"$f\\" \\"${{f%.txt}}.bak\\"; done", "explanation": "Loops through every .txt file and renames it with a .bak extension instead.", "risk": "low"}}
 
 Task: {task}
 

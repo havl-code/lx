@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 
 
 class ResponseParseError(Exception):
@@ -38,3 +39,16 @@ def parse_llm_response(raw_response: str) -> dict:
         )
 
     return data
+
+
+def command_has_valid_syntax(command: str) -> bool:
+    """Check whether a command is at least syntactically valid bash, without running it."""
+    try:
+        result = subprocess.run(
+            ["bash", "-n", "-c", command],
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except (subprocess.SubprocessError, OSError):
+        return True  # if we can't check, don't block the user over our own tooling failure

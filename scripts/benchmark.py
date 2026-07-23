@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import requests
 
 from lx.ollama_client import list_available_models, get_structured_response, OllamaError
-from lx.parser import ResponseParseError
+from lx.parser import ResponseParseError, command_has_valid_syntax
 
 TASKS = [
     "list all running processes",
@@ -40,6 +40,7 @@ def benchmark_model(model: str) -> list[dict]:
         try:
             result = get_structured_response(task, model)
             elapsed = time.perf_counter() - start
+            syntax_ok = command_has_valid_syntax(result["command"])
             results.append(
                 {
                     "model": model,
@@ -48,6 +49,7 @@ def benchmark_model(model: str) -> list[dict]:
                     "success": True,
                     "command": result["command"],
                     "risk": result["risk"],
+                    "syntax_ok": syntax_ok,
                 }
             )
         except (OllamaError, ResponseParseError) as exc:
@@ -60,6 +62,7 @@ def benchmark_model(model: str) -> list[dict]:
                     "success": False,
                     "command": None,
                     "risk": None,
+                    "syntax_ok": None,
                     "error": str(exc),
                 }
             )
@@ -72,7 +75,11 @@ def print_report(all_results: list[dict]) -> None:
     print("-" * 95)
     for row in all_results:
         time_str = f"{row['elapsed']:.2f}"
-        outcome = f"OK ({row['risk']})" if row["success"] else "FAILED"
+        if row["success"]:
+            syntax_flag = "OK" if row["syntax_ok"] else "BAD SYNTAX"
+            outcome = f"{syntax_flag} ({row['risk']})"
+        else:
+            outcome = "FAILED"
         print(f"{row['model']:<20}{row['task']:<45}{time_str:<10}{outcome}")
         if row["success"]:
             print(f"    -> {row['command']}")
