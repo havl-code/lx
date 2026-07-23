@@ -3,6 +3,7 @@ import time
 
 sys.path.insert(0, "src")
 
+import matplotlib.pyplot as plt
 import requests
 
 from lx.ollama_client import list_available_models, get_structured_response, OllamaError
@@ -79,6 +80,47 @@ def print_report(all_results: list[dict]) -> None:
             print(f"    -> {row['error']}")
 
 
+def save_chart(all_results: list[dict], output_path: str = "scripts/benchmark_results.png") -> None:
+    """Generate a grouped bar chart of response times per model per task."""
+    plt.style.use("seaborn-v0_8-whitegrid")
+
+    models = sorted({row["model"] for row in all_results})
+    tasks = TASKS
+
+    task_labels = [t if len(t) <= 25 else t[:22] + "..." for t in tasks]
+    bar_width = 0.8 / len(models)
+    x_positions = range(len(tasks))
+
+    fig, ax = plt.subplots(figsize=(11, 6.5), dpi=150)
+
+    colors = ["#4C72B0", "#DD8452", "#55A868", "#C44E52"]
+
+    for i, model in enumerate(models):
+        times = [
+            next(r["elapsed"] for r in all_results if r["model"] == model and r["task"] == task)
+            for task in tasks
+        ]
+        offsets = [x + i * bar_width for x in x_positions]
+        bars = ax.bar(
+            offsets, times, width=bar_width, label=model,
+            color=colors[i % len(colors)], edgecolor="white", linewidth=0.5,
+        )
+        ax.bar_label(bars, fmt="%.1f", padding=3, fontsize=8)
+
+    ax.set_xlabel("Task", fontsize=11, labelpad=10)
+    ax.set_ylabel("Time (seconds)", fontsize=11)
+    ax.set_title("lx response time by model and task", fontsize=13, fontweight="bold", pad=15)
+    ax.set_xticks([x + bar_width * (len(models) - 1) / 2 for x in x_positions])
+    ax.set_xticklabels(task_labels, rotation=20, ha="right", fontsize=9)
+    ax.legend(frameon=False, fontsize=10)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    print(f"\nChart saved to {output_path}")
+
+
 def main() -> None:
     models = list_available_models()
     print("Benchmarking against locally available models:")
@@ -104,6 +146,7 @@ def main() -> None:
     unload_model(models[-1])
 
     print_report(all_results)
+    save_chart(all_results)
 
 
 if __name__ == "__main__":

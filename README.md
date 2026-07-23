@@ -37,10 +37,21 @@ I don't want to memorise every Linux command flag, and I don't want an AI agent 
 
 - Linux (developed and tested on CachyOS/Arch)
 - Python 3.11+
-- [Ollama](https://ollama.com) installed and running, with at least one model pulled (e.g. `ollama pull gemma3:4b`)
+- [Ollama](https://ollama.com) installed and running, with at least one model pulled (e.g. `ollama pull gemma4:e4b`)
 - For clipboard support: a clipboard tool available to [`pyperclip`](https://pypi.org/project/pyperclip/): on Wayland, `wl-clipboard` (provides `wl-copy`); on X11, `xclip` or `xsel`
 
 ## Setup
+
+Recommended, install as a standalone command available in any terminal:
+
+```bash
+git clone https://github.com/havl-code/lx.git
+cd lx
+pipx install --editable .
+ollama pull gemma4:e4b   # or any model you prefer
+```
+
+Alternatively, for development (running tests, editing dependencies), use a virtual environment instead:
 
 ```bash
 git clone https://github.com/havl-code/lx.git
@@ -49,7 +60,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
-ollama pull gemma3:4b   # or any model you prefer
+ollama pull gemma4:e4b
 ```
 
 ## Usage
@@ -63,7 +74,7 @@ You'll be shown a list of your locally available Ollama models to choose from, t
 To skip the model picker and always use a specific model:
 
 ```bash
-LX_MODEL=gemma3:4b lx
+LX_MODEL=gemma4:e4b lx
 ```
 
 ## Development
@@ -84,7 +95,7 @@ Tests cover JSON parsing/repair logic and CLI input validation, and run automati
 
 ### Benchmarking models
 
-`scripts/benchmark.py` times a fixed set of tasks against every locally pulled Ollama model and reports speed and JSON-parsing reliability for each. See [BENCHMARKS.md](BENCHMARKS.md) for results and findings from testing on this project's development hardware.
+`scripts/benchmark.py` times a fixed set of tasks against every locally pulled Ollama model, checks JSON-parsing reliability, and generates a comparison chart. Requires the `dev` extras (`pip install -e ".[dev]"`), which include `matplotlib`. See [BENCHMARKS.md](BENCHMARKS.md) for results and findings from testing on this project's development hardware.
 
 ```bash
 python scripts/benchmark.py
@@ -92,10 +103,10 @@ python scripts/benchmark.py
 
 ## Known limitations
 
-- Small local models (3B to 8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step and retry logic, but it isn't foolproof: occasional failures are possible, especially with complex or unusual tasks.
-- Valid JSON doesn't guarantee a correct or safe shell command; benchmarking surfaced at least one case of a syntactically broken command labelled "low risk" (see [BENCHMARKS.md](BENCHMARKS.md)). Always read the command and explanation yourself before running anything.
-- Risk classification is entirely the LLM's judgement based on prompt guidance. It's a helpful signal, not a guarantee.
-- `lx` is only available in terminals where its virtual environment is activated (standard for a project still in active development, not yet distributed as a system-wide tool).
+- Small local models (3B to 8B class) don't always produce perfectly formed JSON. `lx` mitigates this with a repair step, retry logic, and Ollama's `format: json` constraint, but it isn't foolproof: occasional failures are still possible, especially for tasks requiring nested shell quoting (e.g. a command that itself needs both single and double quotes). See [BENCHMARKS.md](BENCHMARKS.md) for a documented example.
+- Valid JSON doesn't guarantee a correct or safe shell command; benchmarking surfaced real cases of syntactically broken commands, in one case labelled "low risk" (see [BENCHMARKS.md](BENCHMARKS.md)). Always read the command and explanation yourself before running anything.
+- Risk classification is entirely the LLM's judgement based on prompt guidance, and can vary between runs for similar commands. It's a helpful signal, not a guarantee.
+- `lx` is only available in terminals where it's been installed (via `pipx` or an activated venv), see Setup below.
 
 ## Roadmap
 
@@ -105,7 +116,8 @@ python scripts/benchmark.py
 - [x] Stream responses from Ollama instead of waiting for the full response
 - [x] Interactive model selection, with an `LX_MODEL` override
 - [x] Benchmark alternative models for speed/accuracy tradeoffs on CPU-only hardware
-- [ ] Installable system-wide via `pipx`, without needing manual venv activation
+- [x] Installable system-wide via `pipx`, without needing manual venv activation
+- [ ] Investigate whether smaller models can be made more reliable for nested-quoting tasks (e.g. via few-shot examples in the prompt)
 
 ## Licence
 

@@ -30,6 +30,21 @@ Run via `scripts/benchmark.py`, a standalone tool (not part of the installed `lx
 - `llama3.2:3b` produced a truncated, syntactically invalid command for the "delete old log files" task (`find /var/log -type f -mtime +30 -exec rm {} \`, missing the required `\;` or `+` terminator for `-exec`), while still labelling it "low risk". This is a real limitation worth taking seriously: valid JSON does not imply a valid or safe shell command.
 - `phi4-mini:3.8b` occasionally wrapped its command in extraneous square brackets (`[find ... -delete]`), invalid as a literal shell command. This also surfaced a real bug in `lx` itself: square brackets in model output were being misinterpreted as Rich's own text-styling markup, silently corrupting the displayed command. Fixed by escaping model-generated text before rendering (see commit history).
 
+## Follow-up finding: nested quoting and JSON reliability
+
+A later real-world test task, "change all file extensions in a folder from .png to .jpg", surfaced a deeper reliability issue than the earlier backslash-escaping bug.
+
+This task naturally requires a shell command with **nested quoting**: a pattern like `bash -c 'mv "$file" "${file%.png}.jpg"'` needs both single quotes (for the outer `-c` argument) and double quotes (for variable expansion inside it). Representing that correctly as a JSON string value requires escaping the inner double quotes (`\"`), something `phi4-mini:3.8b` failed to do consistently, across multiple attempts, multiple retries, and even after:
+
+- Prompt engineering specifically warning about quote escaping
+- Enabling Ollama's `"format": "json"` constrained-decoding option, which forces syntactically valid JSON at the token level
+
+With `format: json` enabled, `phi4-mini` did produce syntactically valid JSON, but at the cost of dropping the `explanation` and `risk` fields entirely on this particular task, suggesting the model was already at its structural limit for the combined demands of this task (correct nested quoting *and* the full three-field schema).
+
+`gemma4:e4b` (the larger model) succeeded on the same task, first attempt, no retries needed, producing a simpler `for` loop instead of a nested `bash -c` pattern, both correctly escaped in JSON *and* structurally simpler to begin with.
+
+**Takeaway:** for tasks requiring nested shell quoting, smaller local models (here, ~3.8B) may be unable to reliably produce valid structured output, even with strong prompt engineering and format constraints. Larger models may succeed both by escaping correctly and by naturally choosing simpler, less quote-heavy command structures. This is a genuine capability ceiling, not something `lx`'s repair/retry logic can fully paper over, and is now documented as a known limitation.
+
 ## Takeaways
 
 - Smaller models are meaningfully faster on CPU-only hardware, with no obvious JSON-reliability cost observed in this sample.
