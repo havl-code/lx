@@ -17,7 +17,10 @@ The JSON object must have exactly these three keys:
 - "explanation": a short, plain-English explanation of what the command does
 - "risk": one of "low", "medium", or "high", based on how dangerous the command is (e.g. deleting files, modifying permissions, or making irreversible changes should be "high")
 
-IMPORTANT: The "command" value must be valid JSON string content. If the shell command contains a backslash (for example, to escape parentheses like \\( or \\)), write it as a double backslash so the JSON stays valid. Prefer writing commands that avoid unnecessary backslashes when a simpler equivalent exists (e.g. use quotes around patterns instead of escaping parentheses where possible).
+IMPORTANT: The "command" value must be valid JSON string content.
+- If the shell command contains a backslash (for example, to escape parentheses like \\( or \\)), write it as a double backslash so the JSON stays valid.
+- If the shell command needs to quote something (like a filename pattern or a variable), use single quotes (') instead of double quotes ("), wherever possible. Avoid double quotes inside the command value entirely if a single-quote equivalent exists, since unescaped double quotes will break the JSON.
+- Prefer writing commands that avoid unnecessary backslashes or quoting when a simpler equivalent exists.
 
 Task: {task}
 
@@ -47,6 +50,7 @@ def ask_ollama(task: str, model: str) -> str:
         "model": model,
         "prompt": prompt,
         "stream": True,
+        "format": "json",
         "options": {
             "temperature": 0.2,
         },
