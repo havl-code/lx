@@ -121,6 +121,10 @@ python scripts/benchmark.py
 - [x] Installable system-wide via `pipx`, without needing manual venv activation
 - [x] Investigate whether smaller models can be made more reliable for nested-quoting tasks (few-shot prompting, plus a bash syntax-check safety net)
 
+## Acknowledgments
+
+Built with guidance from Claude (Anthropic), used as a mentor throughout development: explaining concepts, reviewing code, and helping diagnose real bugs along the way.
+
 ## Licence
 
 Released under the MIT Licence, see [LICENSE](LICENSE).
